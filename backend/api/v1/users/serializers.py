@@ -1,14 +1,13 @@
+from django.db import models
+from django.shortcuts import get_object_or_404
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework import serializers, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import SerializerMethodField
 
-from django.shortcuts import get_object_or_404
-
 from users.models import User
 
 from ..serializers import RecipeShortSerializer
-from .validators import validate_username_me
 
 
 class CustomUserCreateSerializer(UserCreateSerializer):
@@ -20,19 +19,16 @@ class CustomUserCreateSerializer(UserCreateSerializer):
         regex=r'^[\w.@+-]'
     )
 
+    username = models.CharField(
+        unique=True,
+    )
+
     class Meta:
         model = User
         fields = (
             'email', 'id', 'username', 'first_name',
             'last_name', 'password'
         )
-
-    def validate_username(self, value):
-        if User.objects.filter(username=value).exists():
-            raise serializers.ValidationError(
-                'Пользователь с таким USERNAME уже существует'
-            )
-        return validate_username_me(value)
 
 
 class CustomUserSerializer(UserSerializer):

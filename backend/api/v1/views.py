@@ -1,3 +1,6 @@
+from django.db.models import Sum
+from django.http.response import HttpResponse
+from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -5,10 +8,6 @@ from rest_framework.permissions import (
     AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly,
 )
 from rest_framework.response import Response
-
-from django.db.models import Sum
-from django.http.response import HttpResponse
-from django.shortcuts import get_object_or_404
 
 from api.v1.utils import create_model_instance, delete_model_instance
 from recipes.models import (
@@ -55,13 +54,22 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend, )
     filterset_class = RecipeFilter
 
+    def my_view(request):
+        recipe_viewset = RecipeViewSet()
+        ingredients = RecipeIngredient.objects.filter(
+            recipe__shopping_cart__user=request.user
+        ).order_by('ingredient__name').values(
+            'ingredient__name', 'ingredient__measurement_unit'
+        ).annotate(amount=Sum('amount'))
+        response = recipe_viewset.create_shopping_cart(ingredients)
+        return response
+
     def get_serializer_class(self):
         if self.request.method == 'GET':
             return RecipeReadSerializer
         return CreateRecipeSerializer
 
-    @staticmethod
-    def send_message(ingredients):
+    def create_shopping_cart(self, ingredients):
         shopping_cart = 'Купить в магазине:'
         for ingredient in ingredients:
             shopping_cart += (
@@ -80,7 +88,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         ).order_by('ingredient__name').values(
             'ingredient__name', 'ingredient__measurement_unit'
         ).annotate(amount=Sum('amount'))
-        return self.send_message(ingredients)
+        return self.create_shopping_cart(ingredients)
 
     @action(
         detail=True,
@@ -120,7 +128,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if request.method == 'POST':
             return create_model_instance(request, recipe, FavoriteSerializer)
 
-        if request.method == 'DELETE':
-            error_message = 'У вас нет этого рецепта в избранном'
-            return delete_model_instance(request, Favorite,
-                                         recipe, error_message)
+        error_message = 'У вас нет этого рецепта в избранном'
+        return delete_model_instance(request, Favorite,
+                                     recipe, error_message)

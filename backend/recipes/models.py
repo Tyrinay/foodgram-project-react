@@ -94,8 +94,9 @@ class RecipeIngredient(models.Model):
     class Meta:
         verbose_name = "ингредиент в рецепте"
         verbose_name_plural = "ингредиенты в рецептах"
+        unique_together = ('recipe', 'ingredient')
 
-    def __str__(self):
+    def str(self):
         return (
             f'{self.ingredient.name} :: {self.ingredient.measurement_unit}'
             f' - {self.amount} '

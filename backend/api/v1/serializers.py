@@ -1,9 +1,8 @@
+from django.db import transaction
 from djoser.serializers import UserSerializer
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
-
-from django.db import transaction
 
 from recipes.models import (
     Favorite, Ingredient, Recipe, RecipeIngredient, ShoppingCart, Tag,
@@ -13,14 +12,12 @@ from users.models import User
 from .utils import create_ingredients
 
 
-# Serializer for tags
 class TagsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
         fields = ('id', 'name', 'color', 'slug')
 
 
-# Serializer for ingredients
 class IngredientsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
@@ -86,17 +83,24 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         ingredients = RecipeIngredient.objects.filter(recipe=obj)
         return RecipeIngredientSerializer(ingredients, many=True).data
 
-    def get_is_favorited(self, obj):
+    def get_user_data(self, obj):
         request = self.context.get('request')
         if not request or request.user.is_anonymous:
-            return False
-        return obj.favorites.filter(user=request.user).exists()
+            return {'is_favorited': False, 'is_in_shopping_cart': False}
+        is_favorited = obj.favorites.filter(user=request.user).exists()
+        is_in_shopping_cart = (
+            obj.shopping_cart.filter(user=request.user).exists()
+        )
+        return {'is_favorited': is_favorited,
+                'is_in_shopping_cart': is_in_shopping_cart}
+
+    def get_is_favorited(self, obj):
+        user_data = self.get_user_data(obj)
+        return user_data['is_favorited']
 
     def get_is_in_shopping_cart(self, obj):
-        request = self.context.get('request')
-        if not request or request.user.is_anonymous:
-            return False
-        return obj.shopping_cart.filter(user=request.user).exists()
+        user_data = self.get_user_data(obj)
+        return user_data['is_in_shopping_cart']
 
 
 # Serializer for creating a recipe
@@ -175,38 +179,29 @@ class RecipeShortSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'image', 'cooking_time')
 
 
-# Serializer for favorite
-class FavoriteSerializer(serializers.ModelSerializer):
+class BaseRecipeSerializer(serializers.ModelSerializer):
     class Meta:
+        abstract = True
+        fields = ('user', 'recipe')
+
+    def validate(self, data):
+        user = data['user']
+        recipe = data['recipe']
+        if self.Meta.model.objects.filter(user=user, recipe=recipe).exists():
+            raise serializers.ValidationError('Рецепт уже добавлен.')
+        return data
+
+    def to_representation(self, instance):
+        return RecipeShortSerializer(
+            instance.recipe, context={'request': self.context.get('request')}
+        ).data
+
+
+class FavoriteSerializer(BaseRecipeSerializer):
+    class Meta(BaseRecipeSerializer.Meta):
         model = Favorite
-        fields = ('user', 'recipe')
-
-    def validate(self, data):
-        user = data['user']
-        if user.favorites.filter(recipe=data['recipe']).exists():
-            raise serializers.ValidationError(
-                'Рецепт уже добавлен в избранное.')
-        return data
-
-    def to_representation(self, instance):
-        return RecipeShortSerializer(
-            instance.recipe, context={'request':
-                                      self.context.get('request')}).data
 
 
-# Serializer for shopping cart
-class ShoppingCartSerializer(serializers.ModelSerializer):
-    class Meta:
+class ShoppingCartSerializer(BaseRecipeSerializer):
+    class Meta(BaseRecipeSerializer.Meta):
         model = ShoppingCart
-        fields = ('user', 'recipe')
-
-    def validate(self, data):
-        user = data['user']
-        if user.shopping_cart.filter(recipe=data['recipe']).exists():
-            raise serializers.ValidationError('Рецепт уже добавлен в корзину')
-        return data
-
-    def to_representation(self, instance):
-        return RecipeShortSerializer(
-            instance.recipe, context={'request':
-                                      self.context.get('request')}).data

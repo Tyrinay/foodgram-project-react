@@ -16,16 +16,6 @@ class User(AbstractUser):
         unique=True,
     )
 
-    first_name = models.CharField(
-        'First Name',
-        max_length=150,
-    )
-
-    last_name = models.CharField(
-        'Last Name',
-        max_length=150,
-    )
-
     class Meta:
         ordering = ('id',)
         verbose_name = 'User'
