@@ -1,4 +1,4 @@
-# Kittygram
+# Foodgram
 
 
 ### Опиание проекта.
