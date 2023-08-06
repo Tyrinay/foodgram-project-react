@@ -7,9 +7,8 @@
 ## Проект доступен по ссылкам:
 
 ```
-- https://foodgramfood.dynnamn.ru/
-- https://foodgramfood.dynnamn.ru/admin/
-- https://foodgramfood.dynnamn.ru/api/docs/
+- https://tyrinayfoodgram.hopto.org/
+- https://tyrinayfoodgram.hopto.org/admin/
 ```
 
 ## Учетная запись администратора:
