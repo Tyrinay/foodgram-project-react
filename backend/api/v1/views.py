@@ -1,5 +1,3 @@
-from django.db.models import Sum
-from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -7,6 +5,9 @@ from rest_framework.permissions import (
     AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly,
 )
 from rest_framework.response import Response
+
+from django.db.models import Sum
+from django.shortcuts import get_object_or_404
 
 from api.v1.utils import create_model_instance, delete_model_instance
 from recipes.models import (
