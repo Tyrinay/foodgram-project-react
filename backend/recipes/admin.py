@@ -1,25 +1,47 @@
 from django.contrib import admin
+from django.core.exceptions import ValidationError
+from django.forms import BaseInlineFormSet
 from django.db.models import Count
+
 
 from .models import (
     Favorite, Ingredient, Recipe, RecipeIngredient, ShoppingCart, Tag,
 )
 
 
-class IngredientInline(admin.TabularInline):
+class IngredientRecipeForm(BaseInlineFormSet):
+
+    def clean(self):
+        super(IngredientRecipeForm, self).clean()
+
+        for form in self.forms:
+            if not hasattr(form, 'cleaned_data'):
+                continue
+            data = form.cleaned_data
+            if (data.get('DELETE')):
+                raise ValidationError('Нельзя удалять все ингредиенты')
+
+
+class IngredientRecipeInline(admin.TabularInline):
     model = RecipeIngredient
+    min_num = 1
+    formset = IngredientRecipeForm
+
+
+class TagInline(admin.TabularInline):
+    model = Recipe.tags.through
     extra = 3
     min_num = 1
 
 
-@admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
     list_display = (
         'author', 'name', 'cooking_time', 'get_favorites', 'get_ingredients',
+        'get_tags',
     )
     search_fields = ('name', 'author__username', 'tags__name')
     list_filter = ('author__username', 'tags__name')
-    inlines = (IngredientInline,)
+    inlines = (IngredientRecipeInline, TagInline)
     empty_value_display = '-пусто-'
 
     def get_queryset(self, request):
@@ -40,6 +62,17 @@ class RecipeAdmin(admin.ModelAdmin):
             [ingredient.name for ingredient in obj.ingredients.all()]
         )
     get_ingredients.short_description = 'Ингредиенты'
+
+    def get_tags(self, obj):
+        return ', '.join(
+            [tag.name for tag in obj.tags.all()]
+        )
+    get_tags.short_description = 'Теги'
+
+
+@admin.register(Recipe)
+class RecipeAdmin(RecipeAdmin):
+    pass
 
 
 @admin.register(Ingredient)

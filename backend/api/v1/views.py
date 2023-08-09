@@ -1,3 +1,5 @@
+from django.db.models import Sum
+from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -5,10 +7,6 @@ from rest_framework.permissions import (
     AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly,
 )
 from rest_framework.response import Response
-
-from django.db.models import Sum
-from django.http.response import HttpResponse
-from django.shortcuts import get_object_or_404
 
 from api.v1.utils import create_model_instance, delete_model_instance
 from recipes.models import (
@@ -22,6 +20,7 @@ from .serializers import (
     CreateRecipeSerializer, FavoriteSerializer, IngredientsSerializer,
     RecipeReadSerializer, ShoppingCartSerializer, TagsSerializer,
 )
+from .utils import create_shopping_cart
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
@@ -70,17 +69,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return RecipeReadSerializer
         return CreateRecipeSerializer
 
-    def create_shopping_cart(self, ingredients):
-        shopping_cart = 'Купить в магазине:'
-        for ingredient in ingredients:
-            shopping_cart += (
-                f"\n{ingredient['ingredient__name']} "
-                f"({ingredient['ingredient__measurement_unit']}) - "
-                f"{ingredient['amount']}")
-        file = 'shopping_cart.txt'
-        response = HttpResponse(shopping_cart, content_type='text/plain')
-        response['Content-Disposition'] = f'attachment; filename="{file}.txt"'
-        return response
+    def get(self, request, *args, **kwargs):
+        recipe = get_object_or_404(Recipe, pk=self.kwargs['pk'])
+        ingredients = recipe.ingredients.values(
+            'ingredient__name', 'ingredient__measurement_unit', 'amount')
+        return create_shopping_cart(ingredients)
 
     @action(detail=False, methods=['GET'])
     def download_shopping_cart(self, request):
