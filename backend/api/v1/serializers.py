@@ -1,9 +1,9 @@
+from django.db import transaction
+
 from djoser.serializers import UserSerializer
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 from rest_framework.fields import SerializerMethodField
-
-from django.db import transaction
 
 from recipes.models import (
     Favorite, Ingredient, Recipe, RecipeIngredient, ShoppingCart, Tag,
@@ -45,7 +45,7 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'measurement_unit', 'amount')
 
 
-class MyCustomUserSerializer(UserSerializer):
+class UserInfoSerializer(UserSerializer):
     is_subscribed = SerializerMethodField(read_only=True)
 
     class Meta:
@@ -63,7 +63,7 @@ class MyCustomUserSerializer(UserSerializer):
 
 class RecipeReadSerializer(serializers.ModelSerializer):
     tags = TagsSerializer(read_only=False, many=True)
-    author = MyCustomUserSerializer(read_only=True, many=False)
+    author = UserInfoSerializer(read_only=True, many=False)
     ingredients = RecipeIngredientSerializer(many=True,
                                              source='recipeingredients')
     is_favorited = serializers.SerializerMethodField()
@@ -108,7 +108,7 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
         many=True, queryset=Tag.objects.all(),
         error_messages={'does_not_exist': 'Указанного тега не существует'})
     image = Base64ImageField(max_length=None)
-    author = MyCustomUserSerializer(read_only=True)
+    author = UserInfoSerializer(read_only=True)
     cooking_time = serializers.IntegerField()
 
     class Meta:

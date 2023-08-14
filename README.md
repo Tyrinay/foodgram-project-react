@@ -33,68 +33,35 @@ Foodgram - проект позволяет:
 git clone git@github.com:Tyrinay/foodgram-project-react.git
 ```
 
-***- Установите и активируйте виртуальное окружение:***
-- для MacOS
+***- Подключиться к вашему серверу:***
 ```
-python3 -m venv venv
-```
-- для Windows
-```
-python -m venv venv
-source venv/bin/activate
-source venv/Scripts/activate
+ssh <server user>@<server IP>
 ```
 
-***- Установите зависимости из файла requirements.txt:***
+***- Установите Докер на свой сервер:***
 ```
-pip install -r requirements.txt
-```
-
-***- Примените миграции:***
-```
-python manage.py migrate
+sudo apt install docker.io
 ```
 
-***- В папке с файлом manage.py выполните команду для запуска локально:***
+***- Установите Docker Compose (для Linux):***
 ```
-python manage.py runserver
-```
-***- Локально Документация доступна по адресу:***
-```
-http://127.0.0.1/api/docs/
-```
-
-### Собираем контейнерыы:
-
-Из папки infra/ разверните контейнеры при помощи docker-compose:
-```
-docker-compose up -d --build
-```
-Выполните миграции:
-```
-docker-compose exec backend python manage.py migrate
-```
-Создайте суперпользователя:
-```
-winpty docker-compose exec backend python manage.py createsuperuser
-```
-Соберите статику:
-```
-docker-compose exec backend python manage.py collectstatic --no-input
-```
-Наполните базу данных ингредиентами и тегами. Выполняйте команду из дериктории где находится файл manage.py:
-```
-docker-compose exec backend python manage.py import_csv
+sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 
 ```
-Остановка проекта:
-```
-docker-compose down
-```
 
-### Подготовка к запуску проекта на удаленном сервере
-
-Cоздать и заполнить .env файл в директории infra
+***- Получить разрешения для docker-compose:***
+```
+sudo chmod +x /usr/local/bin/docker-compose
+```
+***- Создайте каталог проекта:***
+```
+mkdir foodgram && cd foodgram/
+```
+***- Создайте env-файл:***
+```
+touch .env
+```
+***- Заполните env-файл следующим образом:***
 ```
 DB_ENGINE=django.db.backends.postgresql
 DB_NAME=<имя бд>
@@ -103,6 +70,14 @@ POSTGRES_PASSWORD=<пароль бд>
 DB_HOST=db
 DB_PORT=5432
 ALLOWED_HOSTS=*
+```
+***- Скопируйте файлы из 'infra/' (на вашем локальном компьютере) на ваш сервер:***
+```
+scp -r infra/* <server user>@<server IP>:/home/<server user>/foodgram/
+```
+***- Запустите docker-compose:***
+```
+sudo docker-compose up -d/
 ```
 
 Автор: 
