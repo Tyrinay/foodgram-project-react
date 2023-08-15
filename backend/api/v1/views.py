@@ -93,7 +93,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             recipe=get_object_or_404(Recipe, id=pk)
         ).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
- 
+
     @action(
         detail=True,
         methods=['post', 'delete'],
