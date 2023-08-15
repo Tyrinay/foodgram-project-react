@@ -9,9 +9,7 @@ from rest_framework.permissions import (
 )
 from rest_framework.response import Response
 
-from api.v1.utils import (
-    create_model_instance, create_shopping_cart, delete_model_instance,
-)
+from api.v1.utils import create_model_instance, delete_model_instance
 from recipes.models import (
     Favorite, Ingredient, Recipe, RecipeIngredient, ShoppingCart, Tag,
 )
@@ -23,6 +21,7 @@ from .serializers import (
     CreateRecipeSerializer, FavoriteSerializer, IngredientsSerializer,
     RecipeReadSerializer, ShoppingCartSerializer, TagsSerializer,
 )
+from .utils import create_shopping_cart
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
@@ -94,7 +93,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             recipe=get_object_or_404(Recipe, id=pk)
         ).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
+ 
     @action(
         detail=True,
         methods=['post', 'delete'],
