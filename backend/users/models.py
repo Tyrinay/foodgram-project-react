@@ -2,6 +2,8 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models import CheckConstraint, UniqueConstraint
 
+from foodgram.settings import MAX_USERNAME_LENGTH
+
 
 class User(AbstractUser):
     email = models.EmailField(
@@ -12,7 +14,7 @@ class User(AbstractUser):
 
     username = models.CharField(
         'Username',
-        max_length=150,
+        max_length=MAX_USERNAME_LENGTH,
         unique=True,
     )
 

@@ -5,6 +5,7 @@ from rest_framework import serializers, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import SerializerMethodField
 
+from foodgram.settings import MAX_USERNAME_LENGTH
 from users.models import User
 
 from ..serializers import RecipeShortSerializer
@@ -14,7 +15,7 @@ class CustomUserCreateSerializer(UserCreateSerializer):
     """Сериализатор создания пользователя."""
 
     username = serializers.RegexField(
-        max_length=150,
+        max_length=MAX_USERNAME_LENGTH,
         required=True,
         regex=r'^[\w.@+-]'
     )

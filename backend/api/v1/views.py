@@ -2,14 +2,15 @@ from django.db.models import Sum
 from django.shortcuts import get_object_or_404
 
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import status, viewsets
+from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import (
     AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly,
 )
-from rest_framework.response import Response
 
-from api.v1.utils import create_model_instance, delete_model_instance
+from api.v1.utils import (
+    create_model_instance, create_shopping_cart, delete_model_instance,
+)
 from recipes.models import (
     Favorite, Ingredient, Recipe, RecipeIngredient, ShoppingCart, Tag,
 )
@@ -21,7 +22,6 @@ from .serializers import (
     CreateRecipeSerializer, FavoriteSerializer, IngredientsSerializer,
     RecipeReadSerializer, ShoppingCartSerializer, TagsSerializer,
 )
-from .utils import create_shopping_cart
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
@@ -74,25 +74,17 @@ class RecipeViewSet(viewsets.ModelViewSet):
         methods=('POST',),
         permission_classes=[IsAuthenticated])
     def shopping_cart(self, request, pk):
-        context = {'request': request}
         recipe = get_object_or_404(Recipe, id=pk)
-        data = {
-            'user': request.user.id,
-            'recipe': recipe.id
-        }
-        serializer = ShoppingCartSerializer(data=data, context=context)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        if request.method == 'POST':
+            return create_model_instance(request, recipe,
+                                         ShoppingCartSerializer)
 
     @shopping_cart.mapping.delete
     def destroy_shopping_cart(self, request, pk):
-        get_object_or_404(
-            ShoppingCart,
-            user=request.user.id,
-            recipe=get_object_or_404(Recipe, id=pk)
-        ).delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        recipe = get_object_or_404(Recipe, id=pk)
+        error_message = 'У вас нет этого рецепта в списке покупок'
+        return delete_model_instance(request, ShoppingCart,
+                                     recipe, error_message)
 
     @action(
         detail=True,

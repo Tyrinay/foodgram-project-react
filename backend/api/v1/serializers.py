@@ -49,7 +49,6 @@ class UserInfoSerializer(UserSerializer):
     is_subscribed = SerializerMethodField(read_only=True)
 
     class Meta:
-        abstract = True
         model = User
         fields = ('email', 'id', 'username', 'first_name', 'last_name',
                   'is_subscribed')
@@ -177,7 +176,6 @@ class RecipeShortSerializer(serializers.ModelSerializer):
 
 class BaseRecipeSerializer(serializers.ModelSerializer):
     class Meta:
-        abstract = True
         fields = ('user', 'recipe')
 
     def validate(self, data):
