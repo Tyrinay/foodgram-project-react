@@ -38,6 +38,11 @@ class RecipeAdmin(admin.ModelAdmin):
         'author', 'name', 'cooking_time', 'get_favorites', 'get_ingredients',
         'get_tags',
     )
+    fieldsets = [
+        (None, {'fields': ['author']}),
+        ('Recipe Information', {'fields': ['name', 'image', 'text',
+                                           'cooking_time']}),
+    ]
     search_fields = ('name', 'author__username', 'tags__name')
     list_filter = ('author__username', 'tags__name')
     inlines = (IngredientRecipeInline, TagInline)
